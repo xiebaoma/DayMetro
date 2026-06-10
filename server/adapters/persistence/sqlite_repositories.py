@@ -10,6 +10,7 @@ from server.npc_agent.domain.models import (
     MemoryRecord,
     NpcIdentityProfile,
     NpcRuntimeState,
+    PlayerRelationProfile,
 )
 
 
@@ -36,7 +37,7 @@ class SqliteNpcRepository:
             SELECT n.npc_id, n.name, n.role, n.personality, n.initial_location,
                    n.age, n.occupation, n.base_location, n.personality_traits,
                    n.long_term_goals, n.daily_routine, n.social_relations, n.behavior_constraints,
-                   pr.relation_value
+                   pr.relation_value, pr.trust_value, pr.conflict_value, pr.familiarity_value
             FROM npc n
             LEFT JOIN player_relation pr ON pr.npc_id = n.npc_id
             ORDER BY n.id ASC
@@ -56,7 +57,8 @@ class SqliteNpcRepository:
                    n.age, n.occupation, n.base_location, n.personality_traits,
                    n.long_term_goals, n.daily_routine, n.social_relations, n.behavior_constraints,
                    rs.current_location, rs.current_action, rs.mood, rs.goal,
-                   pr.relation_value, ss.game_time
+                   pr.relation_value, pr.trust_value, pr.conflict_value, pr.familiarity_value,
+                   ss.game_time
             FROM npc n
             LEFT JOIN npc_runtime_state rs ON rs.npc_id = n.npc_id
             LEFT JOIN player_relation pr ON pr.npc_id = n.npc_id
@@ -78,6 +80,9 @@ class SqliteNpcRepository:
             goal=row["goal"] or "推进计划",
             identity_profile=_parse_identity_profile(row),
             relation_with_player=int(row["relation_value"] or 0),
+            trust_with_player=int(row["trust_value"] or 0),
+            conflict_with_player=int(row["conflict_value"] or 0),
+            familiarity_with_player=int(row["familiarity_value"] or 0),
             game_time=row["game_time"] or "07:00",
         )
 
@@ -167,6 +172,24 @@ class SqliteRelationRepository:
         ).fetchone()
         return int(row["relation_value"] if row else 0)
 
+    def get_profile(self, npc_id: str) -> PlayerRelationProfile:
+        row = self.conn.execute(
+            """
+            SELECT relation_value, trust_value, conflict_value, familiarity_value
+            FROM player_relation
+            WHERE npc_id = ?
+            """,
+            (npc_id,),
+        ).fetchone()
+        if not row:
+            return PlayerRelationProfile(0, 0, 0, 0)
+        return PlayerRelationProfile(
+            relation_value=int(row["relation_value"] or 0),
+            trust_value=int(row["trust_value"] or 0),
+            conflict_value=int(row["conflict_value"] or 0),
+            familiarity_value=int(row["familiarity_value"] or 0),
+        )
+
     def update_relation(self, npc_id: str, value: int) -> None:
         self.conn.execute(
             """
@@ -176,6 +199,38 @@ class SqliteRelationRepository:
             """,
             (value, npc_id),
         )
+
+    def apply_delta(
+        self,
+        npc_id: str,
+        *,
+        relation_delta: int = 0,
+        trust_delta: int = 0,
+        conflict_delta: int = 0,
+        familiarity_delta: int = 0,
+    ) -> PlayerRelationProfile:
+        current = self.get_profile(npc_id)
+        next_profile = PlayerRelationProfile(
+            relation_value=current.relation_value + relation_delta,
+            trust_value=current.trust_value + trust_delta,
+            conflict_value=max(0, current.conflict_value + conflict_delta),
+            familiarity_value=max(0, current.familiarity_value + familiarity_delta),
+        )
+        self.conn.execute(
+            """
+            UPDATE player_relation
+            SET relation_value = ?, trust_value = ?, conflict_value = ?, familiarity_value = ?
+            WHERE npc_id = ?
+            """,
+            (
+                next_profile.relation_value,
+                next_profile.trust_value,
+                next_profile.conflict_value,
+                next_profile.familiarity_value,
+                npc_id,
+            ),
+        )
+        return next_profile
 
 
 class SqliteSaveStateRepository:
@@ -202,6 +257,83 @@ class SqliteSaveStateRepository:
             (game_time, location, updated_at),
         )
 
+    def update_player_state(self, player_state: dict[str, Any], updated_at: str) -> None:
+        self.conn.execute(
+            """
+            UPDATE save_state
+            SET player_state = ?, updated_at = ?
+            WHERE id = 1
+            """,
+            (json.dumps(player_state, ensure_ascii=False), updated_at),
+        )
+
+
+class SqliteDailyReviewRepository:
+    def __init__(self, conn: sqlite3.Connection):
+        self.conn = conn
+
+    def add_review(
+        self,
+        *,
+        review_date: str,
+        route: list[str],
+        important_events: list[dict[str, Any]],
+        npc_interactions: list[dict[str, Any]],
+        relation_changes: list[dict[str, Any]],
+        state_snapshot: dict[str, Any],
+        keywords: list[str],
+        summary: str,
+        tomorrow_hint: str,
+        created_at: str,
+    ) -> int:
+        cursor = self.conn.execute(
+            """
+            INSERT INTO daily_review
+            (review_date, route, important_events, npc_interactions, relation_changes,
+             state_snapshot, keywords, summary, tomorrow_hint, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                review_date,
+                json.dumps(route, ensure_ascii=False),
+                json.dumps(important_events, ensure_ascii=False),
+                json.dumps(npc_interactions, ensure_ascii=False),
+                json.dumps(relation_changes, ensure_ascii=False),
+                json.dumps(state_snapshot, ensure_ascii=False),
+                json.dumps(keywords, ensure_ascii=False),
+                summary,
+                tomorrow_hint,
+                created_at,
+            ),
+        )
+        return int(cursor.lastrowid)
+
+    def latest_review(self) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            """
+            SELECT id, review_date, route, important_events, npc_interactions, relation_changes,
+                   state_snapshot, keywords, summary, tomorrow_hint, created_at
+            FROM daily_review
+            ORDER BY id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "id": row["id"],
+            "review_date": row["review_date"],
+            "route": json.loads(row["route"]),
+            "important_events": json.loads(row["important_events"]),
+            "npc_interactions": json.loads(row["npc_interactions"]),
+            "relation_changes": json.loads(row["relation_changes"]),
+            "state_snapshot": json.loads(row["state_snapshot"]),
+            "keywords": json.loads(row["keywords"]),
+            "summary": row["summary"],
+            "tomorrow_hint": row["tomorrow_hint"],
+            "created_at": row["created_at"],
+        }
+
 
 class SqliteMemoryRepository:
     def __init__(self, conn: sqlite3.Connection):
@@ -217,6 +349,8 @@ class SqliteMemoryRepository:
             source_type="legacy",
             tags=[],
             related_entity="",
+            memory_type="日常聊天",
+            related_event_id=None,
             metadata={},
         )
 
@@ -230,23 +364,30 @@ class SqliteMemoryRepository:
         source_type: str,
         tags: list[str],
         related_entity: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
+        memory_type: str = "日常聊天",
+        related_event_id: int | None = None,
     ) -> None:
+        metadata = metadata or {}
         self.conn.execute(
             """
             INSERT INTO npc_memory
-            (npc_id, layer, content, importance, source_type, tags, related_entity, metadata, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (npc_id, layer, content, memory_type, importance, source_type, tags, related_entity,
+             related_event_id, metadata, created_at, last_used_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 npc_id,
                 layer,
                 content,
+                memory_type,
                 importance,
                 source_type,
                 json.dumps(tags, ensure_ascii=False),
                 related_entity,
+                related_event_id,
                 json.dumps(metadata, ensure_ascii=False),
+                created_at,
                 created_at,
             ),
         )
@@ -261,7 +402,8 @@ class SqliteMemoryRepository:
         if layer:
             rows = self.conn.execute(
                 """
-                SELECT id, npc_id, layer, content, importance, source_type, tags, related_entity, metadata, created_at
+                SELECT id, npc_id, layer, content, memory_type, importance, source_type, tags,
+                       related_entity, related_event_id, metadata, created_at, last_used_at
                 FROM npc_memory
                 WHERE npc_id = ? AND layer = ?
                 ORDER BY id DESC
@@ -273,7 +415,8 @@ class SqliteMemoryRepository:
 
         rows = self.conn.execute(
             """
-            SELECT id, npc_id, layer, content, importance, source_type, tags, related_entity, metadata, created_at
+            SELECT id, npc_id, layer, content, memory_type, importance, source_type, tags,
+                   related_entity, related_event_id, metadata, created_at, last_used_at
             FROM npc_memory
             WHERE npc_id = ?
             ORDER BY id DESC
@@ -310,7 +453,8 @@ class SqliteMemoryRepository:
         if layers:
             placeholders = ",".join("?" for _ in layers)
             sql = f"""
-                SELECT id, npc_id, layer, content, importance, source_type, tags, related_entity, metadata, created_at
+                SELECT id, npc_id, layer, content, memory_type, importance, source_type, tags,
+                       related_entity, related_event_id, metadata, created_at, last_used_at
                 FROM npc_memory
                 WHERE npc_id = ? AND layer IN ({placeholders})
                 ORDER BY importance DESC, id DESC
@@ -322,7 +466,8 @@ class SqliteMemoryRepository:
 
         rows = self.conn.execute(
             """
-            SELECT id, npc_id, layer, content, importance, source_type, tags, related_entity, metadata, created_at
+            SELECT id, npc_id, layer, content, memory_type, importance, source_type, tags,
+                   related_entity, related_event_id, metadata, created_at, last_used_at
             FROM npc_memory
             WHERE npc_id = ?
             ORDER BY importance DESC, id DESC
@@ -342,6 +487,9 @@ class SqliteMemoryRepository:
             content=row["content"],
             importance=int(row["importance"] or 1),
             created_at=row["created_at"],
+            memory_type=row["memory_type"] or "日常聊天",
+            last_used_at=row["last_used_at"] or row["created_at"],
+            related_event_id=row["related_event_id"],
             source_type=row["source_type"] or "system",
             tags=json.loads(tags_raw),
             related_entity=row["related_entity"] or "",

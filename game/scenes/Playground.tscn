@@ -15,13 +15,14 @@ size = Vector2(48, 480)
 [node name="Playground" type="Node2D"]
 script = ExtResource("1_location")
 location_name = "操场"
-next_scene_path = "res://scenes/Dorm.tscn"
+next_scene_path = "res://scenes/DormNight.tscn"
 next_location_name = "宿舍"
 enter_event_type = "arrive_playground"
 leave_event_type = "leave_playground"
 arrive_next_event_type = "back_to_dorm"
 npc_display_name = "室友B"
 start_minutes = 1230
+enter_player_action = "walk_playground"
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0

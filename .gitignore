@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local runtime state
+.runtime/
+data/*.db
+data/*.db-*
+
+# Godot editor/runtime cache
+game/.godot/
+game/.import/
+game/export_presets.cfg
+
+# Local tooling
+.DS_Store
+.claude/

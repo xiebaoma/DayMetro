@@ -22,6 +22,7 @@ leave_event_type = "leave_company_evening"
 arrive_next_event_type = "arrive_playground"
 npc_display_name = "导师"
 start_minutes = 780
+enter_player_action = "work"
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0

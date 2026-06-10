@@ -8,7 +8,16 @@ from server.adapters.daymetro.dialogue_effects import (
     get_dialogue_options,
     rule_based_reply,
 )
-from server.adapters.llm.deepseek_client import generate_short_reply
+from server.adapters.llm.deepseek_client import generate_action_plan
+from server.npc_agent.services.action_system import (
+    ActionValidationError,
+    action_catalog_for_prompt,
+    parse_action_plan_json,
+    remember,
+    say,
+    update_relationship,
+    validate_action_plan,
+)
 
 
 class DayMetroDialogueEngine:
@@ -22,17 +31,26 @@ class DayMetroDialogueEngine:
         identity_profile,
         recent_memory: str,
         recent_perceptions: list[dict],
-    ) -> str:
+    ) -> dict[str, Any]:
         memory_hint = f" 我还记得你之前说过：{recent_memory}" if recent_memory else ""
         perception_hint = ""
         if recent_perceptions:
             perception_hint = f" 我最近注意到：{recent_perceptions[0].get('perceived_fact', '')}"
-        return (
+        reply = (
             generate_template_reply(npc_name, personality, message)
             + f"（{identity_profile.occupation}）"
             + memory_hint
             + perception_hint
         )
+        return {
+            "reply": reply,
+            "actions": validate_action_plan(
+                [
+                    say(reply),
+                    remember(f"玩家说：{message}"),
+                ]
+            ),
+        }
 
     def apply_choice(
         self,
@@ -54,8 +72,15 @@ class DayMetroDialogueEngine:
     ) -> dict[str, Any]:
         boundary_block = _check_behavior_boundary(identity_profile.behavior_constraints, option_id)
         if boundary_block:
+            reply = f"{npc_name}：{boundary_block}"
             return {
-                "reply": f"{npc_name}：{boundary_block}",
+                "reply": reply,
+                "actions": validate_action_plan(
+                    [
+                        say(reply),
+                        remember("玩家触发了NPC行为边界"),
+                    ]
+                ),
                 "effects": {
                     "choice_text": "触发行为边界",
                     "relation_delta": 0,
@@ -74,19 +99,30 @@ class DayMetroDialogueEngine:
         new_relation = relation_with_player + effects["relation_delta"]
         new_mood = effects["mood_override"] or mood
 
-        reply = None
+        actions = None
         if use_llm:
             prompt = (
-                "你是DayMetro中的NPC，请根据状态给出不超过50字的口语化回复，不要改变系统状态。\n"
+                "你是DayMetro中的NPC。只能输出JSON，不要输出解释。\n"
+                "输出格式必须是一个数组，每个元素都是一个动作对象。\n"
+                "只能从下面允许动作中选择，不能编造动作、字段或游戏不存在的行为：\n"
+                f"{action_catalog_for_prompt()}\n"
+                "本次互动至少包含一个say动作；如果关系变化不为0，可以包含update_relationship动作；"
+                "如果值得记住，可以包含remember动作。\n"
                 f"NPC:{npc_name} 性格:{personality} 地点:{current_location} "
                 f"时间:{game_time} 心情:{new_mood} 目标:{goal} 关系:{new_relation} "
                 f"玩家选择:{effects['choice_text']} 相关记忆:{recent_memory or '无'} "
                 f"身份:{identity_profile.occupation} 长期目标:{','.join(identity_profile.long_term_goals[:2])} "
-                f"最近感知:{recent_perceptions[0].get('perceived_fact', '无') if recent_perceptions else '无'}"
+                f"最近感知:{recent_perceptions[0].get('perceived_fact', '无') if recent_perceptions else '无'}\n"
+                "示例：[{\"action\":\"say\",\"content\":\"早啊，今天又去实习？\"}]"
             )
-            reply = generate_short_reply(prompt)
+            raw_plan = generate_action_plan(prompt)
+            if raw_plan:
+                try:
+                    actions = parse_action_plan_json(raw_plan)
+                except ActionValidationError:
+                    actions = None
 
-        if not reply:
+        if not actions:
             reply = rule_based_reply(
                 npc_name=npc_name,
                 option_id=option_id,
@@ -96,8 +132,20 @@ class DayMetroDialogueEngine:
                 goal=goal,
                 memory_hint=recent_memory,
             )
+            actions = [
+                say(reply),
+                remember(f"玩家选择：{effects['choice_text']}"),
+            ]
+            if effects["relation_delta"] != 0:
+                actions.append(update_relationship("player", effects["relation_delta"]))
+            actions = validate_action_plan(actions)
+        else:
+            say_actions = [action for action in actions if action["action"] == "say"]
+            reply = say_actions[0]["content"] if say_actions else "..."
+
         return {
             "reply": reply,
+            "actions": actions,
             "effects": effects,
             "new_relation": new_relation,
             "new_mood": new_mood,

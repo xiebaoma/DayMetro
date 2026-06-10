@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/Dorm.tscn" id="1_dorm"]
+
+[node name="DormNight" instance=ExtResource("1_dorm")]
+next_scene_path = "res://scenes/Dorm.tscn"
+next_location_name = "新的一天"
+enter_event_type = "back_to_dorm"
+leave_event_type = "sleep"
+arrive_next_event_type = "new_day"
+npc_display_name = "室友B"
+start_minutes = 1320
+enter_player_action = "late_browse"
+generate_daily_review_on_enter = true
+
+[node name="Background" parent="." index="0"]
+color = Color(0.035, 0.045, 0.07, 1)
+
+[node name="MorningLight" parent="." index="9"]
+color = Color(0.18, 0.24, 0.5, 0.18)

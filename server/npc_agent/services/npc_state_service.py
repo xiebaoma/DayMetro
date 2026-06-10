@@ -56,6 +56,9 @@ class NpcStateService:
                     identity_profile=row["identity_profile"],
                     schedule=schedule,
                     relation_with_player=int(row["relation_value"] or 0),
+                    trust_with_player=int(row["trust_value"] or 0),
+                    conflict_with_player=int(row["conflict_value"] or 0),
+                    familiarity_with_player=int(row["familiarity_value"] or 0),
                 )
             )
         return npc_states

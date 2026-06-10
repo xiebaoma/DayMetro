@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "save.db"
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / ".runtime" / "save.db"
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
@@ -52,18 +52,24 @@ def init_database() -> None:
                 npc_id TEXT NOT NULL,
                 layer TEXT NOT NULL DEFAULT 'episodic',
                 content TEXT NOT NULL,
+                memory_type TEXT NOT NULL DEFAULT '日常聊天',
                 importance INTEGER NOT NULL DEFAULT 1,
                 source_type TEXT NOT NULL DEFAULT 'system',
                 tags TEXT NOT NULL DEFAULT '[]',
                 related_entity TEXT NOT NULL DEFAULT '',
+                related_event_id INTEGER,
                 metadata TEXT NOT NULL DEFAULT '{}',
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                last_used_at TEXT NOT NULL DEFAULT ''
             );
 
             CREATE TABLE IF NOT EXISTS player_relation (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 npc_id TEXT NOT NULL UNIQUE,
-                relation_value INTEGER NOT NULL DEFAULT 0
+                relation_value INTEGER NOT NULL DEFAULT 0,
+                trust_value INTEGER NOT NULL DEFAULT 0,
+                conflict_value INTEGER NOT NULL DEFAULT 0,
+                familiarity_value INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS event_log (
@@ -100,6 +106,20 @@ def init_database() -> None:
                 perceived_fact TEXT NOT NULL,
                 confidence REAL NOT NULL,
                 observed_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS daily_review (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                review_date TEXT NOT NULL,
+                route TEXT NOT NULL DEFAULT '[]',
+                important_events TEXT NOT NULL DEFAULT '[]',
+                npc_interactions TEXT NOT NULL DEFAULT '[]',
+                relation_changes TEXT NOT NULL DEFAULT '[]',
+                state_snapshot TEXT NOT NULL DEFAULT '{}',
+                keywords TEXT NOT NULL DEFAULT '[]',
+                summary TEXT NOT NULL,
+                tomorrow_hint TEXT NOT NULL,
+                created_at TEXT NOT NULL
             );
             """
         )
@@ -140,12 +160,29 @@ def _migrate_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE npc_memory ADD COLUMN layer TEXT NOT NULL DEFAULT 'episodic'")
     if "source_type" not in memory_columns:
         conn.execute("ALTER TABLE npc_memory ADD COLUMN source_type TEXT NOT NULL DEFAULT 'system'")
+    if "memory_type" not in memory_columns:
+        conn.execute("ALTER TABLE npc_memory ADD COLUMN memory_type TEXT NOT NULL DEFAULT '日常聊天'")
+    if "last_used_at" not in memory_columns:
+        conn.execute("ALTER TABLE npc_memory ADD COLUMN last_used_at TEXT NOT NULL DEFAULT ''")
+    if "related_event_id" not in memory_columns:
+        conn.execute("ALTER TABLE npc_memory ADD COLUMN related_event_id INTEGER")
     if "tags" not in memory_columns:
         conn.execute("ALTER TABLE npc_memory ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'")
     if "related_entity" not in memory_columns:
         conn.execute("ALTER TABLE npc_memory ADD COLUMN related_entity TEXT NOT NULL DEFAULT ''")
     if "metadata" not in memory_columns:
         conn.execute("ALTER TABLE npc_memory ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}'")
+
+    relation_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(player_relation)").fetchall()
+    }
+    if "trust_value" not in relation_columns:
+        conn.execute("ALTER TABLE player_relation ADD COLUMN trust_value INTEGER NOT NULL DEFAULT 0")
+    if "conflict_value" not in relation_columns:
+        conn.execute("ALTER TABLE player_relation ADD COLUMN conflict_value INTEGER NOT NULL DEFAULT 0")
+    if "familiarity_value" not in relation_columns:
+        conn.execute("ALTER TABLE player_relation ADD COLUMN familiarity_value INTEGER NOT NULL DEFAULT 0")
 
 
 def _seed_default_data(conn: sqlite3.Connection) -> None:
@@ -211,7 +248,18 @@ def _seed_default_data(conn: sqlite3.Connection) -> None:
     state_count = conn.execute("SELECT COUNT(*) AS count FROM save_state").fetchone()["count"]
     if state_count == 0:
         default_player_state = json.dumps(
-            {"energy": 100, "mood": 70, "stress": 20, "focus": 60}, ensure_ascii=False
+            {
+                "energy": 100,
+                "mood": 70,
+                "stress": 20,
+                "focus": 60,
+                "learning": 0,
+                "code": 0,
+                "social": 0,
+                "health": 70,
+                "sleep_quality": 80,
+            },
+            ensure_ascii=False,
         )
         conn.execute(
             """

@@ -28,6 +28,9 @@ def test_init_database_creates_core_tables(monkeypatch, tmp_path: Path) -> None:
         memory_columns = {
             row["name"] for row in conn.execute("PRAGMA table_info(npc_memory)").fetchall()
         }
+        relation_columns = {
+            row["name"] for row in conn.execute("PRAGMA table_info(player_relation)").fetchall()
+        }
 
     assert {
         "npc",
@@ -37,6 +40,7 @@ def test_init_database_creates_core_tables(monkeypatch, tmp_path: Path) -> None:
         "save_state",
         "npc_runtime_state",
         "npc_perception",
+        "daily_review",
     } <= tables
     assert "role" in npc_columns
     assert {
@@ -50,4 +54,14 @@ def test_init_database_creates_core_tables(monkeypatch, tmp_path: Path) -> None:
         "behavior_constraints",
     } <= npc_columns
     assert npc_count >= 5
-    assert {"layer", "source_type", "tags", "related_entity", "metadata"} <= memory_columns
+    assert {
+        "layer",
+        "memory_type",
+        "source_type",
+        "tags",
+        "related_entity",
+        "related_event_id",
+        "metadata",
+        "last_used_at",
+    } <= memory_columns
+    assert {"trust_value", "conflict_value", "familiarity_value"} <= relation_columns

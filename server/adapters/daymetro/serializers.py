@@ -34,6 +34,9 @@ def world_state_response(save_state: dict, npc_states: list[NpcState], player_st
                 "goal": npc.goal,
                 "schedule": npc.schedule,
                 "relation_with_player": npc.relation_with_player,
+                "trust_with_player": npc.trust_with_player,
+                "conflict_with_player": npc.conflict_with_player,
+                "familiarity_with_player": npc.familiarity_with_player,
             }
             for npc in npc_states
         ],

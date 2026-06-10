@@ -22,11 +22,257 @@ leave_event_type = "leave_dorm"
 arrive_next_event_type = "arrive_metro"
 npc_display_name = "室友A"
 start_minutes = 420
+enter_player_action = "morning_prepare"
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0
 offset_bottom = 720.0
-color = Color(0.18, 0.21, 0.3, 1)
+color = Color(0.09, 0.11, 0.14, 1)
+
+[node name="RoomShadow" type="ColorRect" parent="."]
+offset_left = 103.0
+offset_top = 119.0
+offset_right = 1179.0
+offset_bottom = 613.0
+color = Color(0.03, 0.035, 0.045, 0.6)
+
+[node name="RoomFloor" type="ColorRect" parent="."]
+offset_left = 88.0
+offset_top = 102.0
+offset_right = 1160.0
+offset_bottom = 594.0
+color = Color(0.53, 0.46, 0.36, 1)
+
+[node name="BackWall" type="ColorRect" parent="."]
+offset_left = 88.0
+offset_top = 102.0
+offset_right = 1160.0
+offset_bottom = 170.0
+color = Color(0.72, 0.76, 0.73, 1)
+
+[node name="LeftWall" type="ColorRect" parent="."]
+offset_left = 88.0
+offset_top = 102.0
+offset_right = 116.0
+offset_bottom = 594.0
+color = Color(0.63, 0.67, 0.65, 1)
+
+[node name="RightWall" type="ColorRect" parent="."]
+offset_left = 1132.0
+offset_top = 102.0
+offset_right = 1160.0
+offset_bottom = 594.0
+color = Color(0.42, 0.46, 0.45, 1)
+
+[node name="FloorLine1" type="ColorRect" parent="."]
+offset_left = 116.0
+offset_top = 286.0
+offset_right = 1132.0
+offset_bottom = 290.0
+color = Color(0.43, 0.37, 0.29, 0.45)
+
+[node name="FloorLine2" type="ColorRect" parent="."]
+offset_left = 116.0
+offset_top = 420.0
+offset_right = 1132.0
+offset_bottom = 424.0
+color = Color(0.43, 0.37, 0.29, 0.45)
+
+[node name="WindowFrame" type="ColorRect" parent="."]
+offset_left = 500.0
+offset_top = 116.0
+offset_right = 724.0
+offset_bottom = 156.0
+color = Color(0.88, 0.92, 0.94, 1)
+
+[node name="WindowGlass" type="ColorRect" parent="."]
+offset_left = 510.0
+offset_top = 122.0
+offset_right = 714.0
+offset_bottom = 151.0
+color = Color(0.39, 0.63, 0.72, 1)
+
+[node name="MorningLight" type="ColorRect" parent="."]
+offset_left = 490.0
+offset_top = 170.0
+offset_right = 770.0
+offset_bottom = 248.0
+color = Color(0.95, 0.78, 0.42, 0.18)
+
+[node name="BedTopLeftFrame" type="ColorRect" parent="."]
+offset_left = 156.0
+offset_top = 205.0
+offset_right = 396.0
+offset_bottom = 314.0
+color = Color(0.26, 0.22, 0.18, 1)
+
+[node name="BedTopLeftMattress" type="ColorRect" parent="."]
+offset_left = 169.0
+offset_top = 215.0
+offset_right = 383.0
+offset_bottom = 303.0
+color = Color(0.74, 0.83, 0.88, 1)
+
+[node name="BedTopLeftPillow" type="ColorRect" parent="."]
+offset_left = 182.0
+offset_top = 224.0
+offset_right = 245.0
+offset_bottom = 263.0
+color = Color(0.94, 0.96, 0.93, 1)
+
+[node name="BedBottomLeftFrame" type="ColorRect" parent="."]
+offset_left = 156.0
+offset_top = 430.0
+offset_right = 396.0
+offset_bottom = 539.0
+color = Color(0.26, 0.22, 0.18, 1)
+
+[node name="BedBottomLeftMattress" type="ColorRect" parent="."]
+offset_left = 169.0
+offset_top = 440.0
+offset_right = 383.0
+offset_bottom = 528.0
+color = Color(0.82, 0.72, 0.78, 1)
+
+[node name="BedBottomLeftPillow" type="ColorRect" parent="."]
+offset_left = 182.0
+offset_top = 449.0
+offset_right = 245.0
+offset_bottom = 488.0
+color = Color(0.95, 0.94, 0.9, 1)
+
+[node name="BedTopRightFrame" type="ColorRect" parent="."]
+offset_left = 824.0
+offset_top = 205.0
+offset_right = 1064.0
+offset_bottom = 314.0
+color = Color(0.26, 0.22, 0.18, 1)
+
+[node name="BedTopRightMattress" type="ColorRect" parent="."]
+offset_left = 837.0
+offset_top = 215.0
+offset_right = 1051.0
+offset_bottom = 303.0
+color = Color(0.78, 0.86, 0.72, 1)
+
+[node name="BedTopRightPillow" type="ColorRect" parent="."]
+offset_left = 976.0
+offset_top = 224.0
+offset_right = 1038.0
+offset_bottom = 263.0
+color = Color(0.94, 0.96, 0.93, 1)
+
+[node name="BedBottomRightFrame" type="ColorRect" parent="."]
+offset_left = 824.0
+offset_top = 430.0
+offset_right = 1064.0
+offset_bottom = 539.0
+color = Color(0.26, 0.22, 0.18, 1)
+
+[node name="BedBottomRightMattress" type="ColorRect" parent="."]
+offset_left = 837.0
+offset_top = 440.0
+offset_right = 1051.0
+offset_bottom = 528.0
+color = Color(0.86, 0.74, 0.6, 1)
+
+[node name="BedBottomRightPillow" type="ColorRect" parent="."]
+offset_left = 976.0
+offset_top = 449.0
+offset_right = 1038.0
+offset_bottom = 488.0
+color = Color(0.95, 0.94, 0.9, 1)
+
+[node name="CenterRug" type="ColorRect" parent="."]
+offset_left = 462.0
+offset_top = 336.0
+offset_right = 762.0
+offset_bottom = 480.0
+color = Color(0.28, 0.43, 0.47, 1)
+
+[node name="DeskLeft" type="ColorRect" parent="."]
+offset_left = 430.0
+offset_top = 202.0
+offset_right = 575.0
+offset_bottom = 260.0
+color = Color(0.38, 0.28, 0.18, 1)
+
+[node name="DeskRight" type="ColorRect" parent="."]
+offset_left = 650.0
+offset_top = 202.0
+offset_right = 795.0
+offset_bottom = 260.0
+color = Color(0.38, 0.28, 0.18, 1)
+
+[node name="LaptopLeft" type="ColorRect" parent="."]
+offset_left = 470.0
+offset_top = 216.0
+offset_right = 530.0
+offset_bottom = 244.0
+color = Color(0.08, 0.1, 0.12, 1)
+
+[node name="LaptopRight" type="ColorRect" parent="."]
+offset_left = 690.0
+offset_top = 216.0
+offset_right = 750.0
+offset_bottom = 244.0
+color = Color(0.08, 0.1, 0.12, 1)
+
+[node name="WardrobeLeft" type="ColorRect" parent="."]
+offset_left = 130.0
+offset_top = 120.0
+offset_right = 244.0
+offset_bottom = 190.0
+color = Color(0.46, 0.34, 0.23, 1)
+
+[node name="WardrobeRight" type="ColorRect" parent="."]
+offset_left = 980.0
+offset_top = 120.0
+offset_right = 1094.0
+offset_bottom = 190.0
+color = Color(0.46, 0.34, 0.23, 1)
+
+[node name="CargoBoxLarge" type="ColorRect" parent="."]
+offset_left = 470.0
+offset_top = 505.0
+offset_right = 560.0
+offset_bottom = 560.0
+color = Color(0.62, 0.43, 0.22, 1)
+
+[node name="CargoBoxMedium" type="ColorRect" parent="."]
+offset_left = 565.0
+offset_top = 522.0
+offset_right = 632.0
+offset_bottom = 560.0
+color = Color(0.7, 0.5, 0.28, 1)
+
+[node name="CargoBoxSmall" type="ColorRect" parent="."]
+offset_left = 635.0
+offset_top = 532.0
+offset_right = 690.0
+offset_bottom = 560.0
+color = Color(0.55, 0.39, 0.21, 1)
+
+[node name="StorageCrate" type="ColorRect" parent="."]
+offset_left = 706.0
+offset_top = 504.0
+offset_right = 790.0
+offset_bottom = 560.0
+color = Color(0.28, 0.34, 0.32, 1)
+
+[node name="Door" type="ColorRect" parent="."]
+offset_left = 1090.0
+offset_top = 322.0
+offset_right = 1140.0
+offset_bottom = 438.0
+color = Color(0.24, 0.16, 0.1, 1)
+
+[node name="DoorLight" type="ColorRect" parent="."]
+offset_left = 1094.0
+offset_top = 333.0
+offset_right = 1136.0
+offset_bottom = 432.0
+color = Color(0.36, 0.24, 0.15, 1)
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(250, 360)

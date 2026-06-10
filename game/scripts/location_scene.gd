@@ -9,6 +9,8 @@ extends Node2D
 @export var arrive_next_event_type := "arrive_next_location"
 @export var npc_display_name := "NPC"
 @export var start_minutes := 420
+@export var enter_player_action := ""
+@export var generate_daily_review_on_enter := false
 
 var _minutes := 420
 var _tick_accumulator := 0.0
@@ -33,13 +35,63 @@ var _selected_option_index := 0
 
 var _dialogue_options_request: HTTPRequest
 var _dialogue_choice_request: HTTPRequest
+var _player_action_request: HTTPRequest
+var _daily_review_request: HTTPRequest
+var _proactive_request: HTTPRequest
 
 
 func _ready() -> void:
 	_dialogue_options_request = HTTPRequest.new()
 	_dialogue_choice_request = HTTPRequest.new()
+	_player_action_request = HTTPRequest.new()
+	_daily_review_request = HTTPRequest.new()
+	_proactive_request = HTTPRequest.new()
 	add_child(_dialogue_options_request)
 	add_child(_dialogue_choice_request)
+	add_child(_player_action_request)
+	add_child(_daily_review_request)
+	add_child(_proactive_request)
+
+	# NPC visual marker
+	var npc_marker := ColorRect.new()
+	npc_marker.name = "NpcMarker"
+	npc_marker.size = Vector2(32, 48)
+	npc_marker.color = Color(1.0, 0.84, 0.0, 0.5)
+	npc_marker.position = Vector2(-16, -38)
+	_npc_area.add_child(npc_marker)
+
+	var npc_label := Label.new()
+	npc_label.name = "NpcLabel"
+	npc_label.text = "NPC"
+	npc_label.add_theme_font_size_override("font_size", 10)
+	npc_label.add_theme_color_override("font_color", Color.WHITE)
+	npc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	npc_label.size = Vector2(32, 14)
+	npc_label.position = Vector2(-16, 14)
+	_npc_area.add_child(npc_label)
+
+	# Exit visual marker
+	var exit_marker := ColorRect.new()
+	exit_marker.name = "ExitMarker"
+	exit_marker.size = Vector2(48, 120)
+	exit_marker.color = Color(0.2, 1.0, 0.2, 0.3)
+	exit_marker.position = Vector2(-24, -60)
+	_exit_area.add_child(exit_marker)
+
+	var exit_label := Label.new()
+	exit_label.name = "ExitLabel"
+	exit_label.text = "→ 出口"
+	exit_label.add_theme_font_size_override("font_size", 12)
+	exit_label.add_theme_color_override("font_color", Color.GREEN)
+	exit_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	exit_label.size = Vector2(48, 20)
+	exit_label.position = Vector2(-24, -10)
+	_exit_area.add_child(exit_label)
+
+	# Ensure background fills screen
+	var bg = get_node_or_null("Background")
+	if bg is ColorRect:
+		bg.size = get_viewport().get_visible_rect().size
 
 	_minutes = start_minutes
 	_npc_area.body_entered.connect(_on_npc_body_entered)
@@ -49,7 +101,13 @@ func _ready() -> void:
 	_dialogue_panel.visible = false
 	_update_hud()
 	_post_event(enter_event_type, location_name)
+	if enter_player_action != "":
+		await _post_player_action(enter_player_action, location_name)
 	_sync_world_state()
+	if generate_daily_review_on_enter:
+		await _generate_daily_review()
+	else:
+		await _load_proactive_action()
 
 
 func _process(delta: float) -> void:
@@ -155,12 +213,12 @@ func _sync_world_state() -> void:
 	if result.size() != 4:
 		return
 
-	var raw_body = result[3]
+	var raw_body: PackedByteArray = result[3]
 	if raw_body == null:
 		return
 
-	var body_text := raw_body.get_string_from_utf8()
-	var parsed = JSON.parse_string(body_text)
+	var body_text: String = raw_body.get_string_from_utf8()
+	var parsed: Variant = JSON.parse_string(body_text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 
@@ -170,6 +228,17 @@ func _sync_world_state() -> void:
 		_location_label.text = "地点: %s" % parsed["current_location"]
 	if parsed.has("time_label"):
 		_state_label.text = "状态: 当前阶段 %s" % parsed["time_label"]
+	if parsed.has("player_state"):
+		var state: Dictionary = parsed["player_state"]
+		_state_label.text = "状态: 精力%s 心情%s 压力%s 专注%s 代码%s 学习%s 睡眠%s" % [
+			state.get("energy", 100),
+			state.get("mood", 70),
+			state.get("stress", 20),
+			state.get("focus", 60),
+			state.get("code", 0),
+			state.get("learning", 0),
+			state.get("sleep_quality", 80)
+		]
 	if parsed.has("npcs"):
 		_sync_npc_display(parsed["npcs"])
 
@@ -225,12 +294,12 @@ func _load_dialogue_options() -> void:
 		_dialogue_label.text = "对话选项加载失败"
 		return
 
-	var raw_body = result[3]
+	var raw_body: PackedByteArray = result[3]
 	if raw_body == null:
 		_dialogue_label.text = "对话选项加载失败"
 		return
 
-	var parsed = JSON.parse_string(raw_body.get_string_from_utf8())
+	var parsed: Variant = JSON.parse_string(raw_body.get_string_from_utf8())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_dialogue_label.text = "对话选项加载失败"
 		return
@@ -290,12 +359,12 @@ func _submit_selected_dialogue_option() -> void:
 		_dialogue_label.text = "对话提交失败"
 		return
 
-	var raw_body = result[3]
+	var raw_body: PackedByteArray = result[3]
 	if raw_body == null:
 		_dialogue_label.text = "对话提交失败"
 		return
 
-	var parsed = JSON.parse_string(raw_body.get_string_from_utf8())
+	var parsed: Variant = JSON.parse_string(raw_body.get_string_from_utf8())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_dialogue_label.text = "对话提交失败"
 		return
@@ -307,3 +376,103 @@ func _submit_selected_dialogue_option() -> void:
 	]
 	await _sync_world_state()
 	await _load_dialogue_options()
+
+
+func _post_player_action(action_type: String, event_location: String) -> void:
+	var payload := {
+		"action_type": action_type,
+		"location": event_location,
+		"payload": {
+			"source": "godot_client",
+			"description": "%s 执行 %s" % [event_location, action_type]
+		},
+		"game_time": _format_time(_minutes)
+	}
+	var body := JSON.stringify(payload)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var err := _player_action_request.request(
+		"%s/player/action" % backend_base_url,
+		headers,
+		HTTPClient.METHOD_POST,
+		body
+	)
+	if err == OK:
+		await _player_action_request.request_completed
+
+
+func _generate_daily_review() -> void:
+	_dialogue_panel.visible = true
+	_dialogue_label.text = "正在生成今日复盘..."
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var err := _daily_review_request.request(
+		"%s/daily/review" % backend_base_url,
+		headers,
+		HTTPClient.METHOD_POST,
+		"{}"
+	)
+	if err != OK:
+		_dialogue_label.text = "今日复盘生成失败"
+		return
+
+	var result: Array = await _daily_review_request.request_completed
+	if result.size() != 4:
+		_dialogue_label.text = "今日复盘生成失败"
+		return
+
+	var raw_body: PackedByteArray = result[3]
+	if raw_body == null:
+		_dialogue_label.text = "今日复盘生成失败"
+		return
+
+	var parsed: Variant = JSON.parse_string(raw_body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_dialogue_label.text = "今日复盘生成失败"
+		return
+
+	var route_text := " → ".join(parsed.get("route", []))
+	var keywords_text := "、".join(parsed.get("keywords", []))
+	_dialogue_label.text = "今日复盘\n路线：%s\n关键词：%s\n\n%s\n\n明天：%s\n\n按 Esc 关闭。" % [
+		route_text,
+		keywords_text,
+		parsed.get("summary", "今天完整走完了一天。"),
+		parsed.get("tomorrow_hint", "明天继续保持节奏。")
+	]
+
+
+func _load_proactive_action() -> void:
+	var url := "%s/npc/proactive?location=%s&limit=1" % [backend_base_url, location_name.uri_encode()]
+	var err := _proactive_request.request(url)
+	if err != OK:
+		return
+
+	var result: Array = await _proactive_request.request_completed
+	if result.size() != 4:
+		return
+
+	var raw_body: PackedByteArray = result[3]
+	if raw_body == null:
+		return
+
+	var parsed: Variant = JSON.parse_string(raw_body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+
+	var items: Array = parsed.get("proactive_actions", [])
+	if items.is_empty():
+		return
+
+	var item: Dictionary = items[0]
+	var actions: Array = item.get("actions", [])
+	var say_text := ""
+	for action in actions:
+		if typeof(action) == TYPE_DICTIONARY and action.get("action", "") == "say":
+			say_text = str(action.get("content", ""))
+			break
+	if say_text == "":
+		return
+
+	_dialogue_panel.visible = true
+	_dialogue_label.text = "%s：%s\n\n按 Esc 关闭。" % [
+		item.get("npc_name", "NPC"),
+		say_text
+	]

@@ -22,6 +22,7 @@ leave_event_type = "leave_canteen"
 arrive_next_event_type = "return_company"
 npc_display_name = "同事B"
 start_minutes = 720
+enter_player_action = "lunch_chat"
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0

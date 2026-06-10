@@ -58,6 +58,9 @@ class InteractionService:
                 "mood": context.mood,
                 "goal": context.goal,
                 "relation_with_player": context.relation_with_player,
+                "trust_with_player": context.trust_with_player,
+                "conflict_with_player": context.conflict_with_player,
+                "familiarity_with_player": context.familiarity_with_player,
                 "avatar": "placeholder",
             },
             "options": self.options_provider()[:4],
@@ -88,17 +91,25 @@ class InteractionService:
         )
 
         now = datetime.now(timezone.utc).isoformat()
-        self.relation_repo.update_relation(npc_id, result["new_relation"])
+        next_relation = self.relation_repo.apply_delta(
+            npc_id,
+            relation_delta=result["effects"]["relation_delta"],
+            familiarity_delta=1,
+        )
         self.runtime_repo.update_mood(npc_id, result["new_mood"], now)
-        self.event_repo.append_event(
+        event_id = self.event_repo.append_event(
             event_type=result["trigger_event"],
             location=context.current_location,
             payload={
                 "npc_id": npc_id,
                 "option_id": option_id,
                 "choice_text": result["choice_text"],
+                "actions": result["actions"],
                 "relation_delta": result["effects"]["relation_delta"],
-                "new_relation": result["new_relation"],
+                "new_relation": next_relation.relation_value,
+                "new_trust": next_relation.trust_value,
+                "new_conflict": next_relation.conflict_value,
+                "new_familiarity": next_relation.familiarity_value,
                 "new_mood": result["new_mood"],
             },
             created_at=now,
@@ -106,17 +117,22 @@ class InteractionService:
         self.memory_system.remember_choice_outcome(
             npc_id=npc_id,
             choice_text=result["choice_text"],
-            new_relation=result["new_relation"],
+            new_relation=next_relation.relation_value,
             new_mood=result["new_mood"],
             relation_delta=result["effects"]["relation_delta"],
+            related_event_id=event_id,
         )
 
         return {
             "npc_id": npc_id,
             "reply": result["reply"],
+            "actions": result["actions"],
             "effects": {
                 "relation_delta": result["effects"]["relation_delta"],
-                "new_relation": result["new_relation"],
+                "new_relation": next_relation.relation_value,
+                "new_trust": next_relation.trust_value,
+                "new_conflict": next_relation.conflict_value,
+                "new_familiarity": next_relation.familiarity_value,
                 "new_mood": result["new_mood"],
                 "write_memory": result["write_memory"],
             },
@@ -129,7 +145,7 @@ class InteractionService:
         memory_context = self.memory_system.build_context(npc_id, query=message, per_layer=1)
         memory_hint = self.memory_system.render_context_for_prompt(memory_context)
         recent_perceptions = self.perception_service.get_recent_perceptions(npc_id, 5)
-        reply = self.dialogue_engine.generate_free_reply(
+        result = self.dialogue_engine.generate_free_reply(
             npc_id=npc_id,
             npc_name=context.name,
             personality=context.personality,
@@ -138,5 +154,21 @@ class InteractionService:
             recent_memory=memory_hint,
             recent_perceptions=recent_perceptions,
         )
-        self.memory_system.remember_dialogue(npc_id=npc_id, message=message)
-        return {"npc_id": npc_id, "reply": reply}
+        now = datetime.now(timezone.utc).isoformat()
+        event_id = self.event_repo.append_event(
+            event_type="dialogue_free_talk",
+            location=context.current_location,
+            payload={
+                "npc_id": npc_id,
+                "message": message,
+                "actions": result["actions"],
+            },
+            created_at=now,
+        )
+        self.relation_repo.apply_delta(npc_id, familiarity_delta=1)
+        self.memory_system.remember_dialogue(
+            npc_id=npc_id,
+            message=message,
+            related_event_id=event_id,
+        )
+        return {"npc_id": npc_id, "reply": result["reply"], "actions": result["actions"]}

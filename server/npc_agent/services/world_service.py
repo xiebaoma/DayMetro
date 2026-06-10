@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from server.adapters.daymetro.player_actions import normalize_player_state
 from server.adapters.daymetro.serializers import world_state_response
 from server.npc_agent.services.npc_state_service import NpcStateService
 
@@ -20,7 +21,7 @@ class WorldService:
         return world_state_response(
             save_state=save_state,
             npc_states=npc_states,
-            player_state=json.loads(save_state["player_state"]),
+            player_state=normalize_player_state(json.loads(save_state["player_state"])),
         )
 
     def sync_npc_runtime(self) -> None:

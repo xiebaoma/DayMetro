@@ -37,6 +37,8 @@ class LayeredMemory:
         source_type: str = "system",
         tags: list[str] | None = None,
         related_entity: str = "",
+        memory_type: str = "日常聊天",
+        related_event_id: int | None = None,
         metadata: dict | None = None,
     ) -> None:
         self.repo.add_memory_entry(
@@ -48,6 +50,8 @@ class LayeredMemory:
             source_type=source_type,
             tags=tags or [],
             related_entity=related_entity,
+            memory_type=memory_type,
+            related_event_id=related_event_id,
             metadata=metadata or {},
         )
 
@@ -69,7 +73,7 @@ class MemorySystem:
         self.relationship = LayeredMemory(memory_repo, RELATIONSHIP_LAYER)
         self.reflection = LayeredMemory(memory_repo, REFLECTION_LAYER)
 
-    def remember_dialogue(self, npc_id: str, message: str) -> None:
+    def remember_dialogue(self, npc_id: str, message: str, related_event_id: int | None = None) -> None:
         tags = list(_tokenize(message))[:6]
         self.working.add(
             npc_id,
@@ -78,6 +82,8 @@ class MemorySystem:
             source_type="dialogue",
             tags=tags,
             related_entity="player",
+            memory_type="日常聊天",
+            related_event_id=related_event_id,
         )
         self.episodic.add(
             npc_id,
@@ -86,6 +92,8 @@ class MemorySystem:
             source_type="dialogue",
             tags=tags,
             related_entity="player",
+            memory_type="日常聊天",
+            related_event_id=related_event_id,
         )
         self._update_semantic_from_dialogue(npc_id, message, tags)
         self._update_relationship_from_dialogue(npc_id, message, tags)
@@ -99,6 +107,7 @@ class MemorySystem:
         new_relation: int,
         new_mood: str,
         relation_delta: int,
+        related_event_id: int | None = None,
     ) -> None:
         tags = list(_tokenize(choice_text))[:6]
         self.working.add(
@@ -108,6 +117,8 @@ class MemorySystem:
             source_type="choice",
             tags=tags,
             related_entity="player",
+            memory_type="日常聊天",
+            related_event_id=related_event_id,
         )
         self.episodic.add(
             npc_id,
@@ -116,6 +127,8 @@ class MemorySystem:
             source_type="choice",
             tags=tags,
             related_entity="player",
+            memory_type=_memory_type_for_choice(choice_text),
+            related_event_id=related_event_id,
         )
         self.relationship.add(
             npc_id,
@@ -124,7 +137,47 @@ class MemorySystem:
             source_type="relation",
             tags=["relation", *tags[:3]],
             related_entity="player",
+            memory_type="关系变化",
+            related_event_id=related_event_id,
         )
+        self.reflect_if_needed(npc_id)
+
+    def remember_event(
+        self,
+        npc_id: str,
+        *,
+        content: str,
+        memory_type: str,
+        importance: int,
+        related_event_id: int,
+        tags: list[str] | None = None,
+        source_type: str = "event",
+        related_entity: str = "player",
+        metadata: dict | None = None,
+    ) -> None:
+        self.episodic.add(
+            npc_id,
+            content,
+            importance=importance,
+            source_type=source_type,
+            tags=tags or list(_tokenize(content))[:6],
+            related_entity=related_entity,
+            memory_type=memory_type,
+            related_event_id=related_event_id,
+            metadata=metadata,
+        )
+        if memory_type in {"承诺", "帮助", "冲突", "任务进展"}:
+            self.relationship.add(
+                npc_id,
+                f"关系线索：{content}",
+                importance=max(1, importance - 1),
+                source_type=source_type,
+                tags=["relationship", memory_type],
+                related_entity=related_entity,
+                memory_type=memory_type,
+                related_event_id=related_event_id,
+                metadata=metadata,
+            )
         self.reflect_if_needed(npc_id)
 
     def build_context(self, npc_id: str, query: str, per_layer: int = 2) -> MemoryContext:
@@ -209,6 +262,7 @@ class MemorySystem:
             source_type="summary",
             tags=["profile", *tags[:4]],
             related_entity="player",
+            memory_type="玩家状态",
         )
 
     def _update_relationship_from_dialogue(self, npc_id: str, message: str, tags: list[str]) -> None:
@@ -221,4 +275,15 @@ class MemorySystem:
             source_type="dialogue_relation",
             tags=["relationship", *tags[:4]],
             related_entity="player",
+            memory_type="关系变化",
         )
+
+
+def _memory_type_for_choice(choice_text: str) -> str:
+    if "邀请" in choice_text:
+        return "共同经历"
+    if "关心" in choice_text:
+        return "帮助"
+    if "吐槽" in choice_text:
+        return "冲突"
+    return "日常聊天"
