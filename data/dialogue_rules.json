@@ -1,0 +1,20 @@
+{
+  "playful": {
+    "reply": "{name}笑着说：收到！你刚刚提到“{message}”，晚上要不要一起玩一会儿？"
+  },
+  "serious": {
+    "reply": "{name}认真地说：我记下了“{message}”，先把今天目标完成再放松。"
+  },
+  "friendly": {
+    "reply": "{name}友好地回应：明白了，“{message}”这件事我也可以帮你一起看。"
+  },
+  "sarcastic": {
+    "reply": "{name}耸耸肩：嗯，“{message}”听起来又是经典剧情了。"
+  },
+  "strict": {
+    "reply": "{name}提醒你：关于“{message}”，请确保今天能给出可汇报的进展。"
+  },
+  "default": {
+    "reply": "{name}回应：我听到了，“{message}”。"
+  }
+}

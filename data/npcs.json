@@ -1,0 +1,122 @@
+[
+  {
+    "npc_id": "roommate_a",
+    "name": "室友A",
+    "role": "roommate",
+    "personality": "playful",
+    "age": 22,
+    "occupation": "大学生",
+    "base_location": "宿舍",
+    "personality_traits": {
+      "social": "外向",
+      "risk": "谨慎",
+      "warmth": "友善"
+    },
+    "long_term_goals": ["考上研究生", "提升编程能力"],
+    "daily_routine": ["上课", "健身", "看日本漫画", "听日语音乐"],
+    "social_relations": [
+      {"target_id": "player", "type": "室友", "intimacy": "很铁"}
+    ],
+    "behavior_constraints": ["不做违法的事", "不在朋友背后捅刀子"],
+    "initial_location": "宿舍",
+    "initial_mood": "energetic",
+    "default_goal": "白天保持状态，晚上打游戏放松",
+    "initial_relation": 10
+  },
+  {
+    "npc_id": "roommate_b",
+    "name": "室友B",
+    "role": "roommate",
+    "personality": "serious",
+    "age": 22,
+    "occupation": "大学生",
+    "base_location": "宿舍",
+    "personality_traits": {
+      "social": "内向",
+      "risk": "谨慎",
+      "warmth": "冷静"
+    },
+    "long_term_goals": ["保研", "形成稳定学习系统"],
+    "daily_routine": ["上课", "自习", "晚间复盘"],
+    "social_relations": [
+      {"target_id": "player", "type": "室友", "intimacy": "熟悉"}
+    ],
+    "behavior_constraints": ["不在深夜长时间闲聊", "不参与高风险投机"],
+    "initial_location": "宿舍",
+    "initial_mood": "focused",
+    "default_goal": "完成学习计划",
+    "initial_relation": 5
+  },
+  {
+    "npc_id": "coworker_a",
+    "name": "同事A",
+    "role": "coworker",
+    "personality": "friendly",
+    "age": 25,
+    "occupation": "后端工程师",
+    "base_location": "公司",
+    "personality_traits": {
+      "social": "中等外向",
+      "risk": "平衡",
+      "warmth": "友善"
+    },
+    "long_term_goals": ["成为技术负责人", "提升系统设计能力"],
+    "daily_routine": ["早会", "编码", "午饭沟通", "下午开发"],
+    "social_relations": [
+      {"target_id": "player", "type": "同事", "intimacy": "友好"}
+    ],
+    "behavior_constraints": ["不泄露公司数据", "不恶意甩锅"],
+    "initial_location": "公司",
+    "initial_mood": "stable",
+    "default_goal": "按节奏推进开发任务",
+    "initial_relation": 8
+  },
+  {
+    "npc_id": "coworker_b",
+    "name": "同事B",
+    "role": "coworker",
+    "personality": "sarcastic",
+    "age": 26,
+    "occupation": "客户端工程师",
+    "base_location": "公司",
+    "personality_traits": {
+      "social": "外向",
+      "risk": "冒险",
+      "warmth": "嘴硬心软"
+    },
+    "long_term_goals": ["升职加薪", "做出有影响力产品"],
+    "daily_routine": ["白天开发", "中午吐槽", "下午提测修复"],
+    "social_relations": [
+      {"target_id": "player", "type": "同事", "intimacy": "一般"}
+    ],
+    "behavior_constraints": ["不在工作时间外出", "不公开抱怨团队"],
+    "initial_location": "公司",
+    "initial_mood": "stressed",
+    "default_goal": "按时交付并吐槽压力",
+    "initial_relation": 2
+  },
+  {
+    "npc_id": "mentor",
+    "name": "导师",
+    "role": "mentor",
+    "personality": "strict",
+    "age": 33,
+    "occupation": "技术导师",
+    "base_location": "公司",
+    "personality_traits": {
+      "social": "克制",
+      "risk": "谨慎",
+      "warmth": "严厉"
+    },
+    "long_term_goals": ["培养可靠团队", "稳定交付关键项目"],
+    "daily_routine": ["上午早会", "下午任务安排", "晚间总结"],
+    "social_relations": [
+      {"target_id": "player", "type": "导师-学员", "intimacy": "职业关系"}
+    ],
+    "behavior_constraints": ["不接受无依据承诺", "不在工作时离岗"],
+    "initial_location": "公司",
+    "initial_mood": "serious",
+    "default_goal": "跟进团队进度并安排任务",
+    "initial_relation": 0
+  }
+]

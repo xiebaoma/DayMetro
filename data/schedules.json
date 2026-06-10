@@ -1,0 +1,108 @@
+{
+  "roommate_a": [
+    {
+      "start": "07:00",
+      "end": "08:00",
+      "location": "宿舍",
+      "action": "起床洗漱",
+      "mood": "energetic",
+      "goal": "准备出门"
+    },
+    {
+      "start": "20:30",
+      "end": "24:00",
+      "location": "宿舍",
+      "action": "打游戏",
+      "mood": "relaxed",
+      "goal": "放松一天压力"
+    }
+  ],
+  "roommate_b": [
+    {
+      "start": "07:00",
+      "end": "08:00",
+      "location": "宿舍",
+      "action": "晨间整理计划",
+      "mood": "focused",
+      "goal": "确定学习安排"
+    },
+    {
+      "start": "22:00",
+      "end": "24:00",
+      "location": "宿舍",
+      "action": "晚上学习",
+      "mood": "calm",
+      "goal": "完成当天复习"
+    }
+  ],
+  "coworker_a": [
+    {
+      "start": "09:30",
+      "end": "12:00",
+      "location": "公司",
+      "action": "推进开发任务",
+      "mood": "stable",
+      "goal": "完成上午开发目标"
+    },
+    {
+      "start": "12:00",
+      "end": "13:00",
+      "location": "食堂",
+      "action": "午饭交流",
+      "mood": "social",
+      "goal": "补充能量并同步信息"
+    },
+    {
+      "start": "14:00",
+      "end": "18:00",
+      "location": "公司",
+      "action": "下午开发",
+      "mood": "focused",
+      "goal": "完成下午任务"
+    }
+  ],
+  "coworker_b": [
+    {
+      "start": "09:30",
+      "end": "12:00",
+      "location": "公司",
+      "action": "处理需求与代码",
+      "mood": "stressed",
+      "goal": "避免进度落后"
+    },
+    {
+      "start": "12:00",
+      "end": "13:00",
+      "location": "食堂",
+      "action": "午饭吐槽",
+      "mood": "chatty",
+      "goal": "释放压力"
+    },
+    {
+      "start": "14:00",
+      "end": "18:00",
+      "location": "公司",
+      "action": "一边开发一边吐槽工作",
+      "mood": "irritated",
+      "goal": "扛住下午任务"
+    }
+  ],
+  "mentor": [
+    {
+      "start": "10:00",
+      "end": "11:00",
+      "location": "会议室",
+      "action": "主持早会",
+      "mood": "serious",
+      "goal": "确认团队计划"
+    },
+    {
+      "start": "14:00",
+      "end": "18:00",
+      "location": "公司",
+      "action": "安排任务与Review进展",
+      "mood": "strict",
+      "goal": "推进关键任务"
+    }
+  ]
+}

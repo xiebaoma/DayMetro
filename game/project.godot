@@ -1,0 +1,12 @@
+; Engine configuration file.
+; First week minimal runnable project scaffold.
+
+config_version=5
+
+[application]
+config/name="DayMetro"
+run/main_scene="res://scenes/Dorm.tscn"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720

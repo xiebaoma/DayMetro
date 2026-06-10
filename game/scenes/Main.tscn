@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+
+[node name="Main" type="Node2D"]
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(320, 240)
+script = ExtResource("1_player")
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+current = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HUD" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="TimeLabel" type="Label" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 200.0
+offset_bottom = 39.0
+text = "时间: 07:00"
+
+[node name="LocationLabel" type="Label" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 46.0
+offset_right = 200.0
+offset_bottom = 69.0
+text = "地点: 宿舍"
+
+[node name="PlayerStateLabel" type="Label" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 76.0
+offset_right = 420.0
+offset_bottom = 99.0
+text = "状态: 精力100 心情70 压力20 专注60"
+
+[node name="DialogueButton" type="Button" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 110.0
+offset_right = 160.0
+offset_bottom = 146.0
+text = "对话入口"

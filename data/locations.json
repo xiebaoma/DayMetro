@@ -1,0 +1,22 @@
+[
+  {
+    "id": "dorm",
+    "name": "宿舍"
+  },
+  {
+    "id": "metro",
+    "name": "地铁"
+  },
+  {
+    "id": "company",
+    "name": "公司"
+  },
+  {
+    "id": "canteen",
+    "name": "食堂"
+  },
+  {
+    "id": "playground",
+    "name": "操场"
+  }
+]
