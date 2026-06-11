@@ -3,6 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from server.npc_agent.domain.actions import ActionPlan, ActionResult
+from server.npc_agent.domain.cognition import BeliefState, EmotionState, GoalState
+from server.npc_agent.domain.decision import DecisionContext, NpcIntent
+from server.npc_agent.domain.events import PerceivedFact, WorldEvent
+from server.npc_agent.domain.memory import EventMemoryMapping, MemoryContext, MemoryRecord
+
 
 @dataclass
 class NpcIdentityProfile:
@@ -78,27 +84,23 @@ class DialogueNpcContext:
     game_time: str
 
 
-@dataclass
-class MemoryRecord:
-    id: int
-    npc_id: str
-    layer: str
-    content: str
-    importance: int
-    created_at: str
-    memory_type: str
-    last_used_at: str
-    related_event_id: int | None
-    source_type: str
-    tags: list[str]
-    related_entity: str
-    metadata: dict[str, Any]
-
-
-@dataclass
-class MemoryContext:
-    working: list[MemoryRecord]
-    episodic: list[MemoryRecord]
-    semantic: list[MemoryRecord]
-    relationship: list[MemoryRecord]
-    reflection: list[MemoryRecord]
+__all__ = [
+    "ActionPlan",
+    "ActionResult",
+    "BeliefState",
+    "DialogueNpcContext",
+    "EmotionState",
+    "EventMemoryMapping",
+    "GoalState",
+    "MemoryContext",
+    "MemoryRecord",
+    "NpcIdentityProfile",
+    "NpcIntent",
+    "NpcProfile",
+    "NpcRuntimeState",
+    "NpcState",
+    "PerceivedFact",
+    "PlayerRelationProfile",
+    "DecisionContext",
+    "WorldEvent",
+]

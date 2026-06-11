@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from server.database import get_connection, init_database
 from server.logging_service import configure_logging, get_logger
-from server.npc_agent.services.factory import build_services
+from server.adapters.daymetro.factory import build_services
 from server.npc_agent.services.action_system import allowed_action_specs
 
 configure_logging()
@@ -127,21 +127,12 @@ def dialogue_choice(payload: DialogueChoiceRequest) -> dict:
 def event(payload: EventRequest) -> dict:
     with get_connection() as conn:
         services = build_services(conn)
-        result = services["event"].log_event(
-            payload.event_type, payload.location, payload.payload, payload.game_time
+        result = services["event_pipeline"].record_event(
+            event_type=payload.event_type,
+            location=payload.location,
+            payload=payload.payload,
+            game_time=payload.game_time,
         )
-        if payload.game_time:
-            services["perception"].distribute_event_perception(
-                event_id=result["event_id"],
-                event_type=payload.event_type,
-                location=payload.location,
-                payload=payload.payload,
-                game_time=payload.game_time,
-                observed_at=result["created_at"],
-            )
-        # Explicit sync point: state transitions are advanced by clock tick events.
-        if payload.event_type == "tick":
-            services["world"].sync_npc_runtime()
         conn.commit()
     logger.info(
         "event event_id=%s type=%s location=%s game_time=%s",

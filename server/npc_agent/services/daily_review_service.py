@@ -5,16 +5,16 @@ from datetime import datetime, timezone
 from typing import Any
 
 from server.logging_service import get_logger
-from server.adapters.daymetro.player_actions import normalize_player_state
 
 logger = get_logger("daymetro.daily_review")
 
 
 class DailyReviewService:
-    def __init__(self, save_repo, event_repo, review_repo):
+    def __init__(self, save_repo, event_repo, review_repo, player_state_normalizer):
         self.save_repo = save_repo
         self.event_repo = event_repo
         self.review_repo = review_repo
+        self.player_state_normalizer = player_state_normalizer
 
     def generate_review(self, limit: int = 200) -> dict[str, Any] | None:
         save_state = self.save_repo.get_save_state()
@@ -26,7 +26,7 @@ class DailyReviewService:
         important_events = _important_events(events)
         npc_interactions = _npc_interactions(events)
         relation_changes = _relation_changes(events)
-        state_snapshot = normalize_player_state(json.loads(save_state["player_state"]))
+        state_snapshot = self.player_state_normalizer(json.loads(save_state["player_state"]))
         keywords = _keywords(route, important_events, npc_interactions, state_snapshot)
         summary = _summary(route, important_events, npc_interactions, state_snapshot)
         tomorrow_hint = _tomorrow_hint(state_snapshot, important_events)
