@@ -5,8 +5,12 @@ from server.npc_agent.services.memory_system import MemorySystem
 
 
 class MemoryService:
-    def __init__(self, memory_repo: MemoryRepository):
-        self.system = MemorySystem(memory_repo)
+    def __init__(self, memory_repo: MemoryRepository | None = None, system: MemorySystem | None = None):
+        if system is None:
+            if memory_repo is None:
+                raise ValueError("memory_repo is required when system is not provided")
+            system = MemorySystem(memory_repo)
+        self.system = system
 
     def add_memory(self, npc_id: str, content: str, importance: int = 1) -> None:
         self.system.episodic.add(npc_id, content, importance=importance, source_type="manual")

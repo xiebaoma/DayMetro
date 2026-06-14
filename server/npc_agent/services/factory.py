@@ -1,22 +1,11 @@
 from __future__ import annotations
 
-import sqlite3
-
-from server.adapters.content.json_schedule import get_npc_schedule_slot
-from server.adapters.persistence.sqlite_repositories import (
-    SqliteDailyReviewRepository,
-    SqliteEventRepository,
-    SqliteMemoryRepository,
-    SqliteNpcRepository,
-    SqlitePerceptionRepository,
-    SqliteRelationRepository,
-    SqliteRuntimeStateRepository,
-    SqliteSaveStateRepository,
-)
-from server.dialogue import DayMetroDialogueEngine
-from server.adapters.daymetro.dialogue_effects import get_dialogue_options
-from server.npc_agent.services.event_service import EventService
+from server.npc_agent.pipeline.event_pipeline import EventPipeline
+from server.npc_agent.services.cognition_service import CognitionService
 from server.npc_agent.services.daily_review_service import DailyReviewService
+from server.npc_agent.services.decision_service import DecisionService
+from server.npc_agent.services.event_service import EventService
+from server.npc_agent.services.execution_service import ExecutionService
 from server.npc_agent.services.interaction_service import InteractionService
 from server.npc_agent.services.memory_service import MemoryService
 from server.npc_agent.services.memory_system import MemorySystem
@@ -27,61 +16,102 @@ from server.npc_agent.services.proactive_agent_service import ProactiveAgentServ
 from server.npc_agent.services.world_service import WorldService
 
 
-def build_services(conn: sqlite3.Connection) -> dict:
-    npc_repo = SqliteNpcRepository(conn)
-    runtime_repo = SqliteRuntimeStateRepository(conn)
-    relation_repo = SqliteRelationRepository(conn)
-    save_repo = SqliteSaveStateRepository(conn)
-    review_repo = SqliteDailyReviewRepository(conn)
-    memory_repo = SqliteMemoryRepository(conn)
+def build_npc_agent_core(
+    *,
+    npc_repo,
+    runtime_repo,
+    relation_repo,
+    save_repo,
+    review_repo,
+    memory_repo,
+    event_repo,
+    perception_repo,
+    schedule_slot_provider,
+    world_state_serializer,
+    player_state_normalizer,
+    player_action_applier,
+    action_labeler,
+    dialogue_engine,
+    options_provider,
+    event_memory_mapper=None,
+    decision_policy=None,
+    cognition_policy=None,
+    action_executor=None,
+    location_matcher=None,
+) -> dict:
     memory_system = MemorySystem(memory_repo)
-    event_repo = SqliteEventRepository(conn)
-    perception_repo = SqlitePerceptionRepository(conn)
-
     npc_state_service = NpcStateService(
         npc_repo=npc_repo,
         runtime_repo=runtime_repo,
         event_repo=event_repo,
-        schedule_slot_provider=get_npc_schedule_slot,
+        schedule_slot_provider=schedule_slot_provider,
     )
-    world_service = WorldService(save_repo=save_repo, npc_state_service=npc_state_service)
+    world_service = WorldService(
+        save_repo=save_repo,
+        npc_state_service=npc_state_service,
+        player_state_normalizer=player_state_normalizer,
+        serializer=world_state_serializer,
+    )
     perception_service = PerceptionService(
         perception_repo=perception_repo,
         npc_state_service=npc_state_service,
+    )
+    event_service = EventService(event_repo=event_repo)
+    event_pipeline = EventPipeline(
+        event_service=event_service,
+        save_repo=save_repo,
+        perception_service=perception_service,
+        memory_system=memory_system,
+        relation_repo=relation_repo,
+        npc_state_service=npc_state_service,
+        event_memory_mapper=event_memory_mapper,
     )
     interaction_service = InteractionService(
         npc_repo=npc_repo,
         relation_repo=relation_repo,
         runtime_repo=runtime_repo,
         memory_system=memory_system,
-        event_repo=event_repo,
+        event_pipeline=event_pipeline,
         perception_service=perception_service,
-        dialogue_engine=DayMetroDialogueEngine(),
-        options_provider=get_dialogue_options,
+        dialogue_engine=dialogue_engine,
+        options_provider=options_provider,
     )
-    event_service = EventService(
-        event_repo=event_repo,
+    memory_service = MemoryService(system=memory_system)
+    player_state_service = PlayerStateService(
         save_repo=save_repo,
-        memory_system=memory_system,
-        relation_repo=relation_repo,
+        event_repo=event_repo,
+        player_state_normalizer=player_state_normalizer,
+        player_action_applier=player_action_applier,
+        action_labeler=action_labeler,
+        event_pipeline=event_pipeline,
     )
-    memory_service = MemoryService(memory_repo=memory_repo)
-    player_state_service = PlayerStateService(save_repo=save_repo, event_repo=event_repo)
     daily_review_service = DailyReviewService(
         save_repo=save_repo,
         event_repo=event_repo,
         review_repo=review_repo,
+        player_state_normalizer=player_state_normalizer,
     )
+    cognition_service = CognitionService(cognition_policy)
+    decision_service = DecisionService(decision_policy)
+    execution_service = ExecutionService(action_executor)
     proactive_agent_service = ProactiveAgentService(
         save_repo=save_repo,
         event_repo=event_repo,
         memory_system=memory_system,
         npc_state_service=npc_state_service,
+        perception_service=perception_service,
+        cognition_service=cognition_service,
+        decision_service=decision_service,
+        execution_service=execution_service,
+        event_pipeline=event_pipeline,
+        player_state_normalizer=player_state_normalizer,
+        location_matcher=location_matcher or (lambda npc_location, requested_location: npc_location == requested_location),
     )
     return {
         "world": world_service,
         "interaction": interaction_service,
         "event": event_service,
+        "event_pipeline": event_pipeline,
         "perception": perception_service,
         "memory": memory_service,
         "npc_state": npc_state_service,
@@ -89,4 +119,7 @@ def build_services(conn: sqlite3.Connection) -> dict:
         "player_state": player_state_service,
         "daily_review": daily_review_service,
         "proactive": proactive_agent_service,
+        "cognition": cognition_service,
+        "decision": decision_service,
+        "execution": execution_service,
     }

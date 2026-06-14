@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from server.adapters.daymetro.factory import build_services
 from server.database import get_connection
-from server.npc_agent.services.factory import build_services
 
 
 def add_memory(npc_id: str, content: str, importance: int = 1) -> None:

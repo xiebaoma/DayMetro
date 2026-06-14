@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from server.adapters.daymetro.factory import build_services
 from server.database import get_connection
 from server.npc_agent.domain.models import NpcState
-from server.npc_agent.services.factory import build_services
 
 
 def compute_npc_states(game_time: str) -> list[NpcState]:
