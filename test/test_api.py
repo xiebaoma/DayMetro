@@ -46,7 +46,12 @@ def test_world_state_contains_seeded_npcs(monkeypatch, tmp_path: Path) -> None:
         "health",
         "sleep_quality",
     } <= set(body["player_state"].keys())
-    assert len(body["npcs"]) >= 5
+    assert len(body["npcs"]) >= 6
+    roommate_profiles = {item["id"]: item for item in body["npcs"] if item["role"] == "roommate"}
+    assert {"roommate_a", "roommate_b", "roommate_c"} <= set(roommate_profiles.keys())
+    assert "成绩" in " ".join(roommate_profiles["roommate_a"]["identity_profile"]["long_term_goals"])
+    assert "汽车" in " ".join(roommate_profiles["roommate_b"]["identity_profile"]["daily_routine"])
+    assert "打游戏" in " ".join(roommate_profiles["roommate_c"]["identity_profile"]["daily_routine"])
     first_npc = body["npcs"][0]
     assert {
         "id",
@@ -198,11 +203,13 @@ def test_npc_schedule_visibility_by_time(monkeypatch, tmp_path: Path) -> None:
 
     assert morning_locations["roommate_a"] == "宿舍"
     assert morning_locations["roommate_b"] == "宿舍"
+    assert morning_locations["roommate_c"] == "宿舍"
     assert noon_locations["coworker_a"] == "食堂"
     assert noon_locations["coworker_b"] == "食堂"
     assert afternoon_locations["coworker_a"] == "公司"
     assert afternoon_locations["mentor"] == "公司"
     assert night_locations["roommate_b"] == "宿舍"
+    assert night_locations["roommate_c"] == "宿舍"
 
 
 def test_npc_state_change_is_logged(monkeypatch, tmp_path: Path) -> None:

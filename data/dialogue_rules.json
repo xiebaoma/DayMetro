@@ -1,4 +1,13 @@
 {
+  "studious": {
+    "reply": "{name}抬头看了眼笔记：我记下“{message}”了，等我把这一页知识点收个尾。"
+  },
+  "disciplined": {
+    "reply": "{name}看了看日程表：收到，“{message}”可以排进计划里，别打乱节奏就行。"
+  },
+  "lazy_gamer": {
+    "reply": "{name}握着手柄说：听到了听到了，“{message}”这事我打完这局就处理。"
+  },
   "playful": {
     "reply": "{name}笑着说：收到！你刚刚提到“{message}”，晚上要不要一起玩一会儿？"
   },

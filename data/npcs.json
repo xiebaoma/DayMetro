@@ -3,49 +3,73 @@
     "npc_id": "roommate_a",
     "name": "室友A",
     "role": "roommate",
-    "personality": "playful",
+    "personality": "studious",
     "age": 22,
     "occupation": "大学生",
     "base_location": "宿舍",
     "personality_traits": {
-      "social": "外向",
+      "social": "安静专注",
       "risk": "谨慎",
-      "warmth": "友善"
+      "warmth": "可靠"
     },
-    "long_term_goals": ["考上研究生", "提升编程能力"],
-    "daily_routine": ["上课", "健身", "看日本漫画", "听日语音乐"],
+    "long_term_goals": ["保持专业第一梯队成绩", "考上理想研究生"],
+    "daily_routine": ["早起背单词", "上课坐前排", "自习", "整理错题"],
     "social_relations": [
-      {"target_id": "player", "type": "室友", "intimacy": "很铁"}
+      {"target_id": "player", "type": "室友", "intimacy": "熟悉"}
     ],
-    "behavior_constraints": ["不做违法的事", "不在朋友背后捅刀子"],
+    "behavior_constraints": ["不浪费大块学习时间", "不临时改变复习计划"],
     "initial_location": "宿舍",
-    "initial_mood": "energetic",
-    "default_goal": "白天保持状态，晚上打游戏放松",
+    "initial_mood": "focused",
+    "default_goal": "按计划完成今天的学习任务",
     "initial_relation": 10
   },
   {
     "npc_id": "roommate_b",
     "name": "室友B",
     "role": "roommate",
-    "personality": "serious",
+    "personality": "disciplined",
     "age": 22,
     "occupation": "大学生",
     "base_location": "宿舍",
     "personality_traits": {
-      "social": "内向",
+      "social": "稳定",
       "risk": "谨慎",
-      "warmth": "冷静"
+      "warmth": "克制"
     },
-    "long_term_goals": ["保研", "形成稳定学习系统"],
-    "daily_routine": ["上课", "自习", "晚间复盘"],
+    "long_term_goals": ["形成高度自律的生活系统", "攒钱买一辆喜欢的车"],
+    "daily_routine": ["晨跑", "按表学习", "关注汽车评测", "晚间复盘"],
     "social_relations": [
       {"target_id": "player", "type": "室友", "intimacy": "熟悉"}
     ],
-    "behavior_constraints": ["不在深夜长时间闲聊", "不参与高风险投机"],
+    "behavior_constraints": ["不熬夜打乱作息", "不冲动消费改装件"],
     "initial_location": "宿舍",
-    "initial_mood": "focused",
-    "default_goal": "完成学习计划",
+    "initial_mood": "disciplined",
+    "default_goal": "保持作息和训练节奏，顺便看看新车资讯",
     "initial_relation": 5
+  },
+  {
+    "npc_id": "roommate_c",
+    "name": "室友C",
+    "role": "roommate",
+    "personality": "lazy_gamer",
+    "age": 22,
+    "occupation": "大学生",
+    "base_location": "宿舍",
+    "personality_traits": {
+      "social": "随和",
+      "risk": "拖延",
+      "warmth": "好相处"
+    },
+    "long_term_goals": ["通关手上的游戏", "别让作业拖到最后一天"],
+    "daily_routine": ["补觉", "打游戏", "临时赶作业", "深夜刷视频"],
+    "social_relations": [
+      {"target_id": "player", "type": "室友", "intimacy": "很熟"}
+    ],
+    "behavior_constraints": ["不到死线不太主动开始任务", "容易被新游戏吸引"],
+    "initial_location": "宿舍",
+    "initial_mood": "relaxed",
+    "default_goal": "先玩一会儿，等会再做正事",
+    "initial_relation": 8
   },
   {
     "npc_id": "coworker_a",

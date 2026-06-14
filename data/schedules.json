@@ -4,17 +4,17 @@
       "start": "07:00",
       "end": "08:00",
       "location": "宿舍",
-      "action": "起床洗漱",
-      "mood": "energetic",
-      "goal": "准备出门"
+      "action": "背单词并整理课表",
+      "mood": "focused",
+      "goal": "出门前完成晨间学习"
     },
     {
       "start": "20:30",
       "end": "24:00",
       "location": "宿舍",
-      "action": "打游戏",
-      "mood": "relaxed",
-      "goal": "放松一天压力"
+      "action": "复盘错题和明天计划",
+      "mood": "studious",
+      "goal": "保持成绩优势"
     }
   ],
   "roommate_b": [
@@ -22,17 +22,35 @@
       "start": "07:00",
       "end": "08:00",
       "location": "宿舍",
-      "action": "晨间整理计划",
-      "mood": "focused",
-      "goal": "确定学习安排"
+      "action": "晨跑后查看汽车资讯",
+      "mood": "disciplined",
+      "goal": "维持自律节奏"
     },
     {
-      "start": "22:00",
+      "start": "20:30",
       "end": "24:00",
       "location": "宿舍",
-      "action": "晚上学习",
+      "action": "按表复盘，顺便看汽车评测",
       "mood": "calm",
-      "goal": "完成当天复习"
+      "goal": "今天不熬夜"
+    }
+  ],
+  "roommate_c": [
+    {
+      "start": "07:00",
+      "end": "08:00",
+      "location": "宿舍",
+      "action": "赖床并边刷手机边找耳机",
+      "mood": "sleepy",
+      "goal": "再拖五分钟也能赶上出门"
+    },
+    {
+      "start": "20:30",
+      "end": "24:00",
+      "location": "宿舍",
+      "action": "打游戏并把作业放到等会儿",
+      "mood": "relaxed",
+      "goal": "先赢一把，再考虑正事"
     }
   ],
   "coworker_a": [
